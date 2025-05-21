@@ -54,17 +54,16 @@ export const handleEditorEvent = (socket, editorNamespace) => {
                 name
             });
         }catch(err){
-            console.error("Error reading file:", err);
             socket.emit('error', {
                 message: 'Failed to read file', error: err
             });
         } 
     });
 
-    socket.on('deleteFile' , async ({fileData , path}) => {
+    socket.on('deleteFile' , async ( path) => {
         try{
             await fs.unlink(path);
-            socket.emit('deleteFileSuccess' , {
+            editorNamespace.emit('deleteFileSuccess' , {
                 message: 'File deleted successfully',
             });
         }catch(err){
@@ -106,7 +105,7 @@ export const handleEditorEvent = (socket, editorNamespace) => {
         }
     });
 
-    socket.on('renameFile' , async ({fileData , path}) => {
+    socket.on('renameFile' , async ({path}) => {
         try{
             await fs.rename(path.oldPath, path.newPath);
             socket.emit('renameFileSuccess' , {
