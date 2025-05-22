@@ -88,13 +88,13 @@ export const handleEditorEvent = (socket, editorNamespace) => {
         }
     });
 
-    socket.on('deleteFolder' , async ({fileData , path}) => {
+    socket.on('deleteFolder' , async ( path) => {
         try{
-            await fs.rmdir(path, {
+            await fs.rm(path, {
                 recursive: true,
                 force: true
             });
-            socket.emit('deleteFolderSuccess' , {
+            editorNamespace.emit('deleteFolderSuccess' , {
                 message: 'Folder deleted successfully',
             });
         }catch(err){

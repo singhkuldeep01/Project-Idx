@@ -25,9 +25,11 @@ function TreeStructure() {
     };
 
     editorSocket.on('deleteFileSuccess', handleDeleteSuccess);
+    editorSocket.on('deleteFolderSuccess', handleDeleteSuccess);
 
     return () => {
       editorSocket.off('deleteFileSuccess', handleDeleteSuccess);
+      editorSocket.off('deleteFolderSuccess', handleDeleteSuccess);
     };
   }, [editorSocket]);
 

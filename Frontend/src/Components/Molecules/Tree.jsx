@@ -36,6 +36,7 @@ function Tree({ folder }) {
   };
 
   const handleRightClick = (e) => {
+    // console.log('Right click on', folder.name);
     e.preventDefault();
     e.stopPropagation();
     setMenuPos({ x: e.clientX, y: e.clientY });
@@ -65,17 +66,15 @@ function Tree({ folder }) {
   const handleRename = () => {
     closeMenu();
     console.log('Rename', folder.name);
-    // Your rename logic here
   };
 
-  const handleDelete = () => {
+  const handleDeleteFile = () => {
     closeMenu();
-    console.log('Delete', folder.name);
-    editorSocket.emit('deleteFile', folder.path);
-    editorSocket.on('deleteFileSuccess' , (data)=>{
-      console.log(data.message);
-      setTreeStructure();
-    });
+    if(folder.type === 'directory') {
+      editorSocket.emit('deleteFolder', folder.path);
+    } else {
+      editorSocket.emit('deleteFile', folder.path);
+    }
   };
 
   return (
@@ -83,6 +82,7 @@ function Tree({ folder }) {
       {folder.type === 'directory' ? (
         <div
           onClick={handleFolderClick}
+          onContextMenu={handleRightClick}
           className="flex items-center gap-2 cursor-pointer mt-2"
         >
           <span className="text-gray-500">
@@ -91,6 +91,7 @@ function Tree({ folder }) {
           <span className="text-blue-600">{isOpen ? '📂' : '📁'}</span>
           <span className="text-gray-200 font-bold">{folder.name}</span>
         </div>
+        
       ) : (
         <div
           onClick={handleFileClick}
@@ -100,8 +101,10 @@ function Tree({ folder }) {
           <span className="w-[1.5ch]" />
           {getFileIcon(getFileExtension(folder.name))}
           <span className="text-gray-200 font-bold">{folder.name}</span>
-
-          {menuPos && (
+        </div>
+      )}
+      <div>
+        {menuPos && (
             <FileMenu
               ref={menuRef}
               style={{
@@ -111,12 +114,12 @@ function Tree({ folder }) {
                 zIndex: 1000,
               }}
               onRename={handleRename}
-              onDelete={handleDelete}
+              onDelete={handleDeleteFile}
               onClose={closeMenu}
             />
           )}
-        </div>
-      )}
+
+      </div>
 
       {isOpen && folder.children?.length > 0 && (
         <div>
