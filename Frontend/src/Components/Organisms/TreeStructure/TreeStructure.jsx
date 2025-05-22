@@ -20,16 +20,20 @@ function TreeStructure() {
   useEffect(() => {
     if (!editorSocket) return;
 
-    const handleDeleteSuccess = (data) => {
+    const handleDeleteSuccess = () => {
       setTreeStructure(); // Refetch tree after deletion
     };
 
     editorSocket.on('deleteFileSuccess', handleDeleteSuccess);
     editorSocket.on('deleteFolderSuccess', handleDeleteSuccess);
+    editorSocket.on('renameFileFolderSuccess', handleDeleteSuccess);
+    editorSocket.on('createFileSuccess' , handleDeleteSuccess);
 
     return () => {
       editorSocket.off('deleteFileSuccess', handleDeleteSuccess);
       editorSocket.off('deleteFolderSuccess', handleDeleteSuccess);
+      editorSocket.off('renameFileFolderSuccess', handleDeleteSuccess);
+      editorSocket.off('createFileSuccess', handleDeleteSuccess);
     };
   }, [editorSocket]);
 

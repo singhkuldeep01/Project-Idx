@@ -1,21 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-
+import { useState, useEffect, useRef } from 'react';
 import { AiOutlineRight, AiOutlineDown } from 'react-icons/ai';
 import getFileIcon from '../Atoms/FileIcon/FileIcon';
 import { useEditorSocketStore } from '../../Store/editorSocketStore';
 import FileMenu from '../Atoms/fileMenu';
-import { useTreeStructureStore } from '../../Store/treeStructureStore';
+import FileEditModal from '../Atoms/fileEditModal';
+// import FileEditModal from '../Atoms/FileEditModal'
+// ;
 
-
+FileEditModal
 
 function Tree({ folder }) {
   const { editorSocket } = useEditorSocketStore();
   const [isOpen, setIsOpen] = useState(false);
-
-  const {setTreeStructure} = useTreeStructureStore();
-
-  // State to show/hide context menu and store its position
   const [menuPos, setMenuPos] = useState(null);
+  const [modalProps, setModalProps] = useState(null);
   const menuRef = useRef();
 
   const getFileExtension = (fileName) => fileName.split('.').pop();
@@ -36,13 +34,11 @@ function Tree({ folder }) {
   };
 
   const handleRightClick = (e) => {
-    // console.log('Right click on', folder.name);
     e.preventDefault();
     e.stopPropagation();
     setMenuPos({ x: e.clientX, y: e.clientY });
   };
 
-  // Close menu on clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -51,31 +47,55 @@ function Tree({ folder }) {
     }
     if (menuPos) {
       document.addEventListener('mousedown', handleClickOutside);
-    } else {
-      document.removeEventListener('mousedown', handleClickOutside);
     }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuPos]);
 
-  const closeMenu = () => {
-    setMenuPos(null);
-  };
+  const closeMenu = () => setMenuPos(null);
 
   const handleRename = () => {
-    closeMenu();
-    console.log('Rename', folder.name);
-  };
+  closeMenu();
+  setModalProps({
+    isOpen: true,
+    defaultFileName: folder.name,
+    placeholder: `Enter new ${folder.type} name...`,
+    title: `Rename ${folder.type}`,
+    onSubmit: (newName) => {
+      const pathParts = folder.path.split('/');
+      pathParts[pathParts.length - 1] = newName;
+      const newPath = pathParts.join('/');
+
+      editorSocket.emit('renameFileFolder', folder.path , newPath);
+
+      setModalProps(null);
+    },
+    onCancel: () => setModalProps(null),
+  });
+};
+
 
   const handleDeleteFile = () => {
     closeMenu();
-    if(folder.type === 'directory') {
-      editorSocket.emit('deleteFolder', folder.path);
-    } else {
-      editorSocket.emit('deleteFile', folder.path);
-    }
+    const event = folder.type === 'directory' ? 'deleteFolder' : 'deleteFile';
+    editorSocket.emit(event, folder.path);
   };
+
+  const handleCreate = (type) => {
+  closeMenu();
+  setModalProps({
+    isOpen: true,
+    placeholder: `Enter ${type} name...`,
+    title: `Create ${type}`,
+    onSubmit: (name) => {
+      const event = type === 'file' ? 'createFile' : 'createFolder';
+      const newPath = `${folder.path}/${name}`;
+      editorSocket.emit(event, "" , newPath);
+      setModalProps(null);
+    },
+    onCancel: () => setModalProps(null),
+  });
+};
+
 
   return (
     <div className="ml-4 p-1">
@@ -91,35 +111,37 @@ function Tree({ folder }) {
           <span className="text-blue-600">{isOpen ? '📂' : '📁'}</span>
           <span className="text-gray-200 font-bold">{folder.name}</span>
         </div>
-        
       ) : (
         <div
           onClick={handleFileClick}
           onContextMenu={handleRightClick}
-          className="flex items-center gap-2 cursor-pointer ml-5 relative"
+          className="flex items-center gap-2 cursor-pointer ml-5"
         >
           <span className="w-[1.5ch]" />
           {getFileIcon(getFileExtension(folder.name))}
           <span className="text-gray-200 font-bold">{folder.name}</span>
         </div>
       )}
-      <div>
-        {menuPos && (
-            <FileMenu
-              ref={menuRef}
-              style={{
-                position: 'fixed', // fixed to viewport to work with clientX/Y
-                top: menuPos.y,
-                left: menuPos.x,
-                zIndex: 1000,
-              }}
-              onRename={handleRename}
-              onDelete={handleDeleteFile}
-              onClose={closeMenu}
-            />
-          )}
 
-      </div>
+      {menuPos && (
+        <FileMenu
+          ref={menuRef}
+          style={{
+            position: 'fixed',
+            top: menuPos.y,
+            left: menuPos.x,
+            zIndex: 1000,
+          }}
+          onRename={handleRename}
+          onDelete={handleDeleteFile}
+          onClose={closeMenu}
+          type={folder.type}
+          onCreateNewFile={() => handleCreate('file')}
+          onCreateNewFolder={() => handleCreate('folder')}
+        />
+      )}
+
+      {modalProps && <FileEditModal {...modalProps} />}
 
       {isOpen && folder.children?.length > 0 && (
         <div>

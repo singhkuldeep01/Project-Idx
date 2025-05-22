@@ -22,27 +22,32 @@ export const handleEditorEvent = (socket, editorNamespace) => {
 
     });
 
-    socket.on('createFile' , async ({fileData , path}) => {
-        const isFileExists = await fs.stat(path);
-        if(isFileExists){
-            socket.emit('error' , {
-                message: 'File already exists'
-            });
-            return;
-        }
-
+    socket.on('createFile', async ( fileData, path ) => {
+    try {
+        await fs.access(path);
+        // If access succeeds, file already exists
+        socket.emit('error', {
+        message: 'File already exists',
+        });
+        return;
+    } catch {
+        // File does not exist, so proceed to create
         try {
-            await fs.writeFile(path, fileData);
-            socket.emit('createFileSuccess', {
-                message: 'File created successfully',
-            });
+        await fs.writeFile(path, fileData);
+        editorNamespace.emit('createFileSuccess', {
+            message: 'File created successfully',
+            path,
+        });
         } catch (err) {
-            console.error("Error creating file:", err);
-            socket.emit('error', {
-                message: 'Failed to create file', error: err 
-            });
+        console.error("Error creating file:", err);
+        socket.emit('error', {
+            message: 'Failed to create file',
+            error: err.message,
+        });
         }
+    }
     });
+
 
     socket.on('readFile' , async ({path , name}) => {
         try{
@@ -74,10 +79,10 @@ export const handleEditorEvent = (socket, editorNamespace) => {
         }
     });
 
-    socket.on('createFolder' , async ({fileData , path}) => {
+    socket.on('createFolder' , async (fileData , path) => {
         try{
             await fs.mkdir(path);
-            socket.emit('createFolderSuccess' , {
+            editorNamespace.emit('createFileSuccess' , {
                 message: 'Folder created successfully',
             });
         }catch(err){
@@ -105,30 +110,16 @@ export const handleEditorEvent = (socket, editorNamespace) => {
         }
     });
 
-    socket.on('renameFile' , async ({path}) => {
+    socket.on('renameFileFolder' , async (oldPath , newPath) => {
         try{
-            await fs.rename(path.oldPath, path.newPath);
-            socket.emit('renameFileSuccess' , {
+            await fs.rename(oldPath, newPath);
+            editorNamespace.emit('renameFileFolderSuccess' , {
                 message: 'File renamed successfully',
             });
         }catch(err){
             console.error("Error renaming file:", err);
             socket.emit('error', {
                 message: 'Failed to rename file', error: err
-            });
-        }
-    });
-
-    socket.on('renameFolder' , async ({fileData , path}) => {
-        try{
-            await fs.rename(path.oldPath, path.newPath);
-            socket.emit('renameFolderSuccess' , {
-                message: 'Folder renamed successfully',
-            });
-        }catch(err){
-            console.error("Error renaming folder:", err);
-            socket.emit('error', {
-                message: 'Failed to rename folder', error: err
             });
         }
     });
