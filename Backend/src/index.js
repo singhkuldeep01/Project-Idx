@@ -36,13 +36,13 @@ terminalNamespace.on('connection', (socket) => {
   // For demonstration, we will just echo back the input
 
   // socket.emit('shell-output', 'Welcome to the terminal! Type your commands below.');
-  socket.on('shell-input', (data) => {
-    // Process the input data and send output back
-    socket.emit('shell-output', data);
-  });
+  // socket.on('shell-input', (data) => {
+  //   // Process the input data and send output back
+  //   socket.emit('shell-output', data);
+  // });
 
   socket.on('disconnect', () => {
-    // Handle disconnection logic if needed
+    // Handle disconnection logic if needed           
   });
 
   handleContainerCreate(projectId, socket);
