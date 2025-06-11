@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Layout, Button } from 'antd';
-import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { MenuFoldOutlined, MenuUnfoldOutlined, ConsoleSqlOutlined } from '@ant-design/icons';
 import Editor from '@monaco-editor/react';
 import draculaTheme from '../Drakula.json';
 import EditorComponent from '../Components/Molecules/EditorComponent';
@@ -10,8 +10,9 @@ import { useActiveFileTabStore } from '../Store/activeFileTabStore';
 import { io } from 'socket.io-client';
 import TreeStructure from '../Components/Organisms/TreeStructure/TreeStructure';
 import { getLanguage } from '../utils/getLanguage';
+import BrowserTerminal from '../Components/Molecules/BrowserTerminal';
 
-const { Sider, Content } = Layout;
+const { Sider } = Layout;
 
 function ProjectPlayground() {
   const editorRef = useRef(null);
@@ -19,10 +20,10 @@ function ProjectPlayground() {
   const { editorSocket, setEditorSocket } = useEditorSocketStore();
   const [collapsed, setCollapsed] = useState(false);
   const [language, setLanguage] = useState('javascript');
+  const [showTerminal, setShowTerminal] = useState(true);
 
   const {
     activeFileTab,
-    setActiveFileTab,
     updateActiveFileContent
   } = useActiveFileTabStore();
 
@@ -32,7 +33,6 @@ function ProjectPlayground() {
     monaco.editor.setTheme('dracula');
   };
 
-  // ⚡ Update content in editor only when switching to a new file
   useEffect(() => {
     if (editorRef.current && activeFileTab?.content !== undefined) {
       const current = editorRef.current.getValue();
@@ -44,7 +44,7 @@ function ProjectPlayground() {
     if (activeFileTab?.extension) {
       setLanguage(getLanguage(activeFileTab.extension));
     }
-  }, [activeFileTab?.path]); // react only to tab switch
+  }, [activeFileTab?.path]);
 
   useEffect(() => {
     const editorSocketConn = io(
@@ -78,15 +78,18 @@ function ProjectPlayground() {
         fileName: activeFileTab.name
       });
       updateActiveFileContent(value);
-    }, 500); // 2 seconds debounce
+    }, 500);
   };
 
   useEffect(() => {
     return () => clearTimeout(debounceTimer.current);
   }, []);
 
+
+
+
   return (
-    <Layout className="min-h-screen bg-[#1e1e1e] text-white">
+    <Layout className="h-screen bg-[#1e1e1e] text-white overflow-hidden">
       <Sider
         width={300}
         collapsed={collapsed}
@@ -105,30 +108,54 @@ function ProjectPlayground() {
             top: 16,
             left: collapsed ? '50%' : 16,
             transform: collapsed ? 'translateX(-50%)' : 'none',
-            zIndex: 1,
-            padding: collapsed ? '6px' : '10px'
+            zIndex: 1
           }}
         />
         {!collapsed && <TreeStructure />}
       </Sider>
 
-      <Layout style={{ backgroundColor: '#1e1e1e' }}>
-        <Content className="flex flex-col p-0 overflow-hidden h-full">
-          <div className="flex-shrink-0 mb-0 border-b border-[#333]">
-            <EditorComponent />
-          </div>
+      <Layout className="flex flex-col bg-[#1e1e1e] w-full">
+        {/* Tab Bar */}
+        <div className="flex-shrink-0 border-b bg-[#1e1e1e]  border-[#333] flex items-center justify-between">
+          <EditorComponent />
+          <Button
+            onClick={() => setShowTerminal(!showTerminal)}
+            icon={<ConsoleSqlOutlined />}
+            size="small"
+            className="mr-2 my-2"
+          >
+            {showTerminal ? 'Hide Terminal' : 'Show Terminal'}
+          </Button>
+        </div>
 
-          <div className="flex-grow border-b border-[#333]">
-            <Editor
-              height="100vh"
-              language={language}
-              value={activeFileTab?.content || ''} // ✅ Use uncontrolled mode
-              theme="dracula"
-              onMount={handleEditorDidMount}
-              onChange={handleEditorChange}
+        {/* Editor */}
+        <div className="flex-grow overflow-hidden border-b border-[#333]">
+          <Editor
+            language={language}
+            value={activeFileTab?.content || ''}
+            theme="dracula"
+            onMount={handleEditorDidMount}
+            onChange={handleEditorChange}
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14
+            }}
+          />
+        </div>
+
+        {/* Terminal (Resizable and Toggleable) */}
+        {showTerminal && (
+          <>
+            <div
+              className="h-2  bg-[#444]"
             />
-          </div>
-        </Content>
+            <div
+              className="flex-shrink-0 bg-black min-h-56"
+            >
+              <BrowserTerminal />
+            </div>
+          </>
+        )}
       </Layout>
     </Layout>
   );

@@ -4,6 +4,7 @@ export const handleEditorEvent = (socket, editorNamespace) => {
     
     socket.on('writeFile', async ({path , content , fileName}) => {
         try{
+            console.log('write file called');
             const response = await fs.writeFile(path, content);
             editorNamespace.emit('writeFileSuccess' , {
                 message: 'File written successfully',
@@ -50,6 +51,7 @@ export const handleEditorEvent = (socket, editorNamespace) => {
 
 
     socket.on('readFile' , async ({path , name}) => {
+        console.log('read File called');
         try{
             const response = await fs.readFile(path, 'utf-8');
             socket.emit('readFileSuccess' , {

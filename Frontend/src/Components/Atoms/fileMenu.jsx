@@ -22,24 +22,6 @@ function FileMenu({ style, onRename, onDelete, onClose , type  , onCreateNewFile
     >
 
       {/* Menu options */}
-      <div
-        className="px-4 py-2 cursor-pointer hover:bg-[#333333] hover:text-white"
-        onClick={() => {
-          onRename();
-          onClose();
-        }}
-      >
-        Rename
-      </div>
-      <div
-        className="px-4 py-2 cursor-pointer text-red-500 hover:bg-[#5a1a1a] hover:text-red-400"
-        onClick={() => {
-          onDelete();
-          onClose();
-        }}
-      >
-        Delete
-      </div>
       {(type === 'directory')?
       <>
         <div
@@ -61,6 +43,24 @@ function FileMenu({ style, onRename, onDelete, onClose , type  , onCreateNewFile
         Create New Folder
       </div>
       </> : null}
+      <div
+        className="px-4 py-2 cursor-pointer hover:bg-[#333333] hover:text-white"
+        onClick={() => {
+          onRename();
+          onClose();
+        }}
+      >
+        Rename
+      </div>
+      <div
+        className="px-4 py-2 cursor-pointer text-red-500 hover:bg-[#5a1a1a] hover:text-red-400"
+        onClick={() => {
+          onDelete();
+          onClose();
+        }}
+      >
+        Delete
+      </div>
     </div>
   );
 }

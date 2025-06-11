@@ -12,6 +12,7 @@ export const useEditorSocketStore = create((set) => {
       incomingSocket?.off("writeFileSuccess");
 
       incomingSocket?.on("readFileSuccess", (data) => {
+        console.log("read file succes called");
         const {
           openTabs,
           setActiveFileTab,
@@ -22,6 +23,7 @@ export const useEditorSocketStore = create((set) => {
         const isTabAlreadyOpen = openTabs.some(tab => tab.path === data.path);
 
         if (isTabAlreadyOpen) {
+          // console.log("Tab already open, updating content");
           updateActiveFileContent(data.data, data.path); // ✅ Only update content
         } else {
           setActiveFileTab(

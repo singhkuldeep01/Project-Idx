@@ -27,6 +27,7 @@ function Tree({ folder }) {
 
   const handleFileClick = (e) => {
     e.stopPropagation();
+    console.log("hello");
     editorSocket.emit('readFile', {
       path: folder.path,
       name: folder.name
